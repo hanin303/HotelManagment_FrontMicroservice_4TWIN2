@@ -9,7 +9,7 @@ import { KeycloakService } from 'keycloak-angular';
   providedIn: 'root',
 })
 export class EmployeeService {
-  private baseUrl = 'http://localhost:8090';
+  private baseUrl = 'http://localhost:8082';
 
   constructor(
     private http: HttpClient,
@@ -18,13 +18,16 @@ export class EmployeeService {
 
   addEmployee(employee: Employee): Observable<Employee> {
     const url = `${this.baseUrl}/employee/add`;
-    return this.http.post<Employee>(url, employee);
+    return this.http.post<Employee>(url, employee).pipe(
+      catchError((error: any) => {
+        console.error('Error ', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getAllEmployees(): Observable<Employee[]> {
-    console.log(  this.keycloakService.getKeycloakInstance().token)
-    // console.log(this.keycloakService.getUsername())
-
+    console.log(this.keycloakService.getKeycloakInstance().token);
     const url = `${this.baseUrl}/employee/getAll`;
     return this.http
       .get<Employee[]>(url, {
@@ -37,6 +40,23 @@ export class EmployeeService {
       .pipe(
         catchError((error: any) => {
           console.error('Error fetching', error);
+          return throwError(() => error);
+        })
+      );
+  }
+  getEmployeeById(employeeId: number): Observable<Employee> {
+    const url = `${this.baseUrl}/employee/get/${employeeId}`;
+    return this.http
+      .get<Employee>(url, {
+        headers: {
+          Authorization: `Bearer ${
+            this.keycloakService.getKeycloakInstance().token
+          }`,
+        },
+      })
+      .pipe(
+        catchError((error: any) => {
+          console.error(`Error fetching employee with ID ${employeeId}`, error);
           return throwError(() => error);
         })
       );
